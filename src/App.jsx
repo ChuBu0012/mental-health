@@ -10,6 +10,7 @@ import {
   setAns,
 } from "./store/userSlice";
 import Choice from "./components/choice";
+import Card from "./components/card";
 const HomePage = () => {
   const [nextQ, setNextQ] = useState(0);
   const [lastQ, setLastQ] = useState(false);
@@ -19,23 +20,10 @@ const HomePage = () => {
       "animate__animated animate__fadeInRight animate__animated animate__fadeInRight",
   });
   const [isCheckSelect, setisCheckSelect] = useState(false);
+  const [isCheckPrev, setisCheckPrev] = useState(false);
   const { users } = useSelector((state) => ({ ...state }));
   const usersvalue = users.value;
   const dispatch = useDispatch();
-
-  const slideQ = () => {
-    setStatusSlide({
-      status: false,
-      animation: "",
-    });
-    setTimeout(() => {
-      setStatusSlide({
-        status: true,
-        animation:
-          "animate__animated animate__fadeInRight animate__animated animate__fadeInRight",
-      });
-    }, 50);
-  };
 
   const NextQuestion = () => {
     setNextQ((prevnum) => {
@@ -43,13 +31,12 @@ const HomePage = () => {
         // dev
         return prevnum;
       }
-      slideQ();
       return prevnum + 1;
     });
   };
   const PrevQuestion = () => {
     setNextQ(nextQ - 1);
-    slideQ();
+    setisCheckSelect(false);
   };
   const setAnsAndN_Q = () => {
     NextQuestion();
@@ -58,19 +45,66 @@ const HomePage = () => {
   const setIndex = () => {
     dispatch(removeIndex());
     dispatch(countIndex(mockdata[nextQ].choice.length));
+    if (nextQ == 0) {
+      setisCheckPrev(false);
+    } else {
+      setisCheckPrev(true);
+    }
   };
   useEffect(() => {
     setIndex();
   }, [nextQ]);
 
   return (
-    <div className="w-full h-screen overflow-hidden flex justify-center items-center bg-gradient-to-b from-[#B5FFFC] to-[#FFDEE9]">
-      {statusSlide.status && (
-        <QandA Question={mockdata[nextQ]?.q} animation={statusSlide.animation}>
-          {mockdata[nextQ].choice.map((ele, index) => {
-            return (
-              <Choice
-                style={`${usersvalue.checkedchoice[index] ? "underline" : ""}`}
+    <Card style={`overflow-hidden`}>
+      <QandA Question={mockdata[nextQ]?.q} animation={statusSlide.animation}>
+        {mockdata[nextQ].choice.map((ele, index) => {
+          
+          return (
+            <Choice
+              style={`${usersvalue.checkedchoice[index] ? "underline" : ""}`}
+              clickfuc={(e) => {
+                dispatch(
+                  setValue({
+                    Ques: ele.label,
+                    Ans: ele.value,
+                  })
+                );
+                dispatch(selectChoice(index));
+                setisCheckSelect(true);
+              }}
+              key={index}
+              label={ele.label}
+            />
+          );
+        })}
+        {isCheckPrev && (
+          <Choice
+            clickfuc={() => {
+              PrevQuestion();
+            }}
+            label={"prev"}
+          />
+        )}
+        <Choice
+          disable={!isCheckSelect}
+          style={`${isCheckSelect ? "" : "text-red-500"}`}
+          clickfuc={() => {
+            setAnsAndN_Q();
+            setisCheckSelect(false);
+          }}
+          label={"next"}
+        />
+      </QandA>
+      {
+        // {mockdata[nextQ].choice.map((ele, index) => {
+        //   return (
+        //     <Choice
+        //     />
+        //   );
+        // })}
+        /* <QandA Question={mockdata[nextQ]?.q}>
+           style={`${usersvalue.checkedchoice[index] ? "underline" : ""}`}
                 clickfuc={(e) => {
                   dispatch(
                     setValue({
@@ -82,28 +116,9 @@ const HomePage = () => {
                   setisCheckSelect(true);
                 }}
                 key={index}
-                label={ele.label}
-              />
-            );
-          })}
-          <Choice
-            clickfuc={() => {
-              PrevQuestion();
-            }}
-            label={"prev"}
-          />
-          <Choice
-            disable={!isCheckSelect}
-            style={`${isCheckSelect ? "" : "text-red-500"}`}
-            clickfuc={() => {
-              setAnsAndN_Q();
-              setisCheckSelect(false);
-            }}
-            label={"next"}
-          />
-        </QandA>
-      )}
-    </div>
+                label={ele.label} */
+      }
+    </Card>
   );
 };
 
